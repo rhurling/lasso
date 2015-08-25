@@ -285,12 +285,28 @@
 
 										text = text.replace(/\n/g, '<br>');
 
-										(new Medium.Html(medium, text))
-											.setClean(false)
+										var el = new Medium.Html(medium, text);
+										el.setClean(false)
 											.insert(settings.beforeInsertHtml, true);
 
 										html.clean();
 										html.placeholders();
+
+										jQuery.post('/wp-admin/admin-ajax.php', {
+											action: 'parse-embed',
+											post_ID: lasso_editor.postid,
+											shortcode: '[embed]' + text + '[/embed]'
+										}).done(function(response){
+											var embed = ( response && response.data && response.data.body ) || '';
+
+											if ( embed ) {
+												el.html = '<!--EDITUS_OTHER_SHORTCODE_START|[[embed]' + text + '[/embed]]-->' + embed + '<!--EDITUS_OTHER_SHORTCODE_END-->';
+												el.setClean(false).insert(settings.beforeInsertHtml, true);
+
+												html.clean();
+												html.placeholders();
+											}
+										});
 									});
 								} else {
 									html.clean();
