@@ -283,14 +283,17 @@
 									utils.pasteHook(function (text) {
 										utils.selection.restoreSelection(sel);
 
-										text = text.replace(/\n/g, '<br>');
+										if ( ! text || text.length < 11 || ! text.match(/^http(s)?:\/\//) ) {
+											text = text.replace(/\n/g, '<br>');
+											(new Medium.Html(medium, text))
+												.setClean(false)
+												.insert(settings.beforeInsertHtml, true);
 
-										var el = new Medium.Html(medium, text);
-										el.setClean(false)
-											.insert(settings.beforeInsertHtml, true);
+											html.clean();
+											html.placeholders();
 
-										html.clean();
-										html.placeholders();
+											return;
+										}
 
 										jQuery.post('/wp-admin/admin-ajax.php', {
 											action: 'parse-embed',
@@ -300,12 +303,17 @@
 											var embed = ( response && response.data && response.data.body ) || '';
 
 											if ( embed ) {
-												el.html = '<!--EDITUS_OTHER_SHORTCODE_START|[[embed]' + text + '[/embed]]-->' + embed + '<!--EDITUS_OTHER_SHORTCODE_END-->';
-												el.setClean(false).insert(settings.beforeInsertHtml, true);
-
-												html.clean();
-												html.placeholders();
+												text = '<!--EDITUS_OTHER_SHORTCODE_START|[[embed]' + text + '[/embed]]-->' + embed + '<!--EDITUS_OTHER_SHORTCODE_END-->';
+											} else {
+												text = text.replace(/\n/g, '<br>');
 											}
+
+											(new Medium.Html(medium, text))
+												.setClean(false)
+												.insert(settings.beforeInsertHtml, true);
+
+											html.clean();
+											html.placeholders();
 										});
 									});
 								} else {
